@@ -11,7 +11,7 @@
             margin: 0;
             padding: 0;
         }
-        form1 {
+        form {
             width: 90%;
             margin: 20px auto;
             padding: 20px;
@@ -40,27 +40,44 @@
         }
         .button-container {
             text-align: center;
-            margin-top: 20px;
+            margin-bottom: 20px;
         }
-        .back-button {
+        .toggle-button {
             padding: 10px 20px;
             background-color: #4CAF50;
             color: white;
             text-decoration: none;
+            border: none;
             border-radius: 5px;
+            cursor: pointer;
         }
-        .back-button:hover {
+        .toggle-button:hover {
             background-color: #45a049;
         }
     </style>
 </head>
 <body>
     <form id="form1" runat="server">
+        <a href="AdminDashboard.aspx" class="back-button">Back to Dashboard</a>
         <h1>Admin Reports</h1>
-        <asp:GridView ID="gvReport" runat="server" AutoGenerateColumns="True" OnRowDataBound="gvBorrowRecords_RowDataBound"></asp:GridView>
-        <div class="button-container">
-            <a href="AdminDashboard.aspx" class="back-button">Back to Dashboard</a>
-        </div>
+       <div class="button-container">
+    <asp:Button ID="btnSwitchToBookReport" runat="server" Text="Book Borrow Report" CssClass="toggle-button" OnClick="ShowBookReport" />
+    <asp:Button ID="btnSwitchToUserReport" runat="server" Text="User Borrow Report" CssClass="toggle-button" OnClick="ShowUserReport" />
+    <!-- Buttons for downloading reports -->
+    <asp:Button ID="btnDownloadBookReport" runat="server" Text="Download Book Report" CssClass="toggle-button" OnClick="DownloadBookReport" />
+    <asp:Button ID="btnDownloadUserReport" runat="server" Text="Download User Report" CssClass="toggle-button" OnClick="DownloadUserReport" />
+</div>
+
+
+        <!-- Panel for Book Borrow Report -->
+        <asp:Panel ID="pnlBookReport" runat="server" Visible="true">
+            <asp:GridView ID="gvBookBorrowReport" runat="server" AutoGenerateColumns="True" ></asp:GridView>
+        </asp:Panel>
+
+        <!-- Panel for User Borrow Report -->
+        <asp:Panel ID="pnlUserReport" runat="server" Visible="false">
+            <asp:GridView ID="gvUserBorrowReport" runat="server" AutoGenerateColumns="True"></asp:GridView>
+        </asp:Panel>
     </form>
 </body>
 </html>

@@ -78,7 +78,10 @@
         <h1>Welcome to the Library Management System</h1>
         <p>
             Manage your books and borrowing records seamlessly. <br />
-            Please log in or register to get started.
+            Please log in or register to get started.<br />
+            If any problem contact to Admin <br />
+            Phone No: xxx-yyy-zzzz<br />
+            Email: xyz@gmail.com
         </p>
          <a href="User/UserLogin.aspx">Login in</a>
     </div>

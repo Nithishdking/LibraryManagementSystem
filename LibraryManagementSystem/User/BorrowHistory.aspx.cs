@@ -18,6 +18,56 @@ namespace LibraryManagementSystem.User
             }
 
         }
+        private void ExtendDueDate(int bookID)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                // First, check if the book has been returned or not
+                string checkQuery = @"
+            SELECT IsReturned 
+            FROM BorrowRecords
+            WHERE BookId = @BookId AND UserId = @UserId";
+
+                SqlCommand checkCmd = new SqlCommand(checkQuery, conn);
+                checkCmd.Parameters.AddWithValue("@BookId", bookID);
+                checkCmd.Parameters.AddWithValue("@UserId", GetLoggedInUserID());
+
+                conn.Open();
+                bool isReturned = Convert.ToBoolean(checkCmd.ExecuteScalar());
+
+                // Only extend the due date if the book is not returned
+                if (isReturned)
+                {
+                    Response.Write("<script>alert('This book has already been returned. You cannot extend the due date.');</script>");
+                    return;
+                }
+
+                // Update the ReturnDate by adding a number of days (e.g., 7 days)
+                string query = @"
+            UPDATE BorrowRecords
+            SET ReturnDate = DATEADD(DAY, 7, ReturnDate)
+            WHERE BookId = @BookId AND UserId = @UserId AND IsReturned = 0";
+
+                try
+                {
+                    SqlCommand cmd = new SqlCommand(query, conn);
+                    cmd.Parameters.AddWithValue("@BookId", bookID);
+                    cmd.Parameters.AddWithValue("@UserId", GetLoggedInUserID());
+
+                    cmd.ExecuteNonQuery(); // Execute the command to extend the return date
+
+                    // Reload the borrow records to reflect the updated return date
+                    LoadBorrowRecords();
+                    Response.Write("<script>alert('Due date extended successfully!');</script>");
+                }
+                catch (Exception ex)
+                {
+                    Response.Write($"<script>alert('Error extending due date: {ex.Message}');</script>");
+                }
+            }
+        }
+
+
 
         // Load Borrowed Books for Logged-in User
         private void LoadBorrowRecords()
@@ -42,13 +92,18 @@ namespace LibraryManagementSystem.User
         // Handle Return Button Click
         protected void gvBorrowRecords_RowCommand(object sender, GridViewCommandEventArgs e)
         {
-            if (e.CommandName == "Return")
+            if (e.CommandName == "ExtendDueDate")
+            {
+                // Retrieve the BookId from the CommandArgument (button clicked)
+                int bookID = Convert.ToInt32(e.CommandArgument);
+                ExtendDueDate(bookID);
+            }
+            else if (e.CommandName == "Return")
             {
                 int bookID = Convert.ToInt32(e.CommandArgument);
                 ReturnBook(bookID);
             }
         }
-
         // Return Book
         private void ReturnBook(int bookID)
         {
@@ -93,7 +148,7 @@ namespace LibraryManagementSystem.User
                 }
             }
         }
-
+       
         // Dummy method to get logged-in user ID
         private int GetLoggedInUserID()
         {

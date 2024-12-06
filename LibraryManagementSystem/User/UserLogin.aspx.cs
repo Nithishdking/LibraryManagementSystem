@@ -75,18 +75,31 @@ namespace LibraryManagementSystem.User
 
             if (isAuthenticated)
             {
-                // Retrieve the UserID from the database
-                int userId = GetUserId(userName);
+                // Check if the user's account is approved
+                if (IsUserApproved(userName))
+                {
+                    // Retrieve the UserID from the database
+                    int userId = GetUserId(userName);
 
-                // Set session variables for authenticated user
-                Session["Username"] = userName;
-                Session["UserId"] = userId; // Set the logged-in user's ID
+                    // Set session variables for authenticated user
+                    Session["Username"] = userName;
+                    Session["UserId"] = userId; // Set the logged-in user's ID
 
-                // Debugging output
-                System.Diagnostics.Debug.WriteLine("User Authenticated. UserId: " + userId);
+                    // Debugging output
+                    System.Diagnostics.Debug.WriteLine("User Authenticated. UserId: " + userId);
 
-                // Redirect to User Dashboard
-                Response.Redirect("UserDashboard.aspx");
+                    // Redirect to User Dashboard
+                    Response.Redirect("UserDashboard.aspx");
+                }
+                else
+                {
+                    // Display error message if the user is not approved
+                    loginError.Text = "Your account is not approved yet. Please contact admin.";
+                    loginError.Visible = true;
+
+                    // Debugging output
+                    System.Diagnostics.Debug.WriteLine("User not approved!");
+                }
             }
             else
             {
@@ -96,6 +109,28 @@ namespace LibraryManagementSystem.User
 
                 // Debugging output
                 System.Diagnostics.Debug.WriteLine("Authentication Failed!");
+            }
+        }
+
+        /// <summary>
+        /// Checks if the user's account is approved.
+        /// </summary>
+        private bool IsUserApproved(string username)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                string query = "SELECT COUNT(*) FROM Users WHERE Username = @Username AND IsApproved = 1";
+
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Username", username);
+
+                    conn.Open();
+                    int count = (int)cmd.ExecuteScalar();
+                    conn.Close();
+
+                    return count > 0; // Return true if user is approved
+                }
             }
         }
         /// <summary>

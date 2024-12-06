@@ -25,7 +25,45 @@ namespace LibraryManagementSystem.User
                 lblWelcome.Text = $"Welcome, {Session["Username"].ToString()}!";
             }
         }
+        protected void ClearSearch(object sender, EventArgs e)
+        {
+            // Clear the TextBox when the user clicks the "Clear" button
+            txtSearch.Text = string.Empty;
 
+            // Optionally, you can also trigger the logic to reload the books or update the search results
+            // (For example, if you're filtering books based on the search input, you may need to reload the entire list)
+            LoadAvailableBooks();
+        }
+        protected void SearchBooks(object sender, EventArgs e)
+        {
+            string searchText = txtSearch.Text.Trim();
+
+            if (string.IsNullOrEmpty(searchText))
+            {
+                // If search text is empty, load all books
+                LoadAvailableBooks();
+            }
+            else
+            {
+                // Build the SQL query to search across title, author, and category
+                string query = "SELECT BookID, Title, Author, Category, PublishedYear FROM Books WHERE Title LIKE @SearchText OR Author LIKE @SearchText OR Category LIKE @SearchText";
+
+                using (SqlConnection conn = new SqlConnection(connectionString))
+                {
+                    SqlCommand cmd = new SqlCommand(query, conn);
+                    // Add parameter to prevent SQL injection
+                    cmd.Parameters.AddWithValue("@SearchText", "%" + searchText + "%");
+
+                    conn.Open();
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+
+                    gvAvailableBooks.DataSource = dt;
+                    gvAvailableBooks.DataBind();
+                }
+            }
+        }
 
         // Load available books from the database
         private void LoadAvailableBooks()

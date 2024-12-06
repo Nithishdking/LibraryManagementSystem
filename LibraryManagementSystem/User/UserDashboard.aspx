@@ -96,34 +96,92 @@ body {
             margin: 50px auto;
 text-align: center
         }
+        .search-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.search-label {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+}
+
+.search-input {
+    padding: 10px;
+    font-size: 16px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    width: 300px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.search-btn,
+.clear-btn {
+    padding: 10px 20px;
+    background-color: #4CAF50; /* Green button */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.search-btn:hover,
+.clear-btn:hover {
+    background-color: #45a049; /* Darker green on hover */
+}
+
+.clear-btn {
+    background-color: #f44336; /* Red button for clear */
+}
+
+.clear-btn:hover {
+    background-color: #e31a1a;
+}
+
+h3 {
+    margin-top: 20px;
+    font-size: 24px;
+    color: #333;
+}
+
         table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        table th, table td {
-            padding: 10px;
-            text-align: left;
-            border: 1px solid #ddd;
-        }
-        table th {
-            background-color: #4CAF50;
-            color: white;
-        }
-        table tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        .action-btn {
-            color: #007bff;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .action-btn:hover {
-            text-decoration: underline;
-        }
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+table th, table td {
+    padding: 10px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+table th {
+    background-color: #4CAF50;
+    color: white;
+}
+
+table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.action-btn {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.action-btn:hover {
+    text-decoration: underline;
+}}
     </style>
 </head>
 <body>
@@ -154,7 +212,13 @@ text-align: center
     <a href="BorrowHistory.aspx" class="link-btn">View Borrow History</a>
 </div>
         <h3>Available Books</h3>
+        <div class="search-form">
+            <asp:TextBox ID="txtSearch" runat="server" placeholder="Search by Title, Author, or Category" CssClass="search-input"></asp:TextBox>
+            <asp:Button ID="btnSearch" runat="server" Text="Search" OnClick="SearchBooks" CssClass="search-btn" />
+            <asp:Button ID="btnClear" runat="server" Text="Clear" CssClass="clear-btn" OnClick="ClearSearch" />
+        </div>
 
+        </div>
         <!-- Available Books Table -->
         <table>
             <%--<thead>
@@ -168,6 +232,7 @@ text-align: center
                 </tr>
             </thead>--%>
             <tbody>
+
                 <asp:GridView ID="gvAvailableBooks" runat="server" AutoGenerateColumns="False" OnRowCommand="gvAvailableBooks_RowCommand">
                     <Columns>
                         <asp:BoundField DataField="BookID" HeaderText="Book ID" SortExpression="BookID" />
@@ -186,5 +251,11 @@ text-align: center
         </table>
     </div>
 </form>
+    <script type="text/javascript">
+    function ClearSearch() {
+        document.getElementById('<%= txtSearch.ClientID %>').value = ''; // Clear the input field
+    }
+    </script>
+
 </body>
 </html>

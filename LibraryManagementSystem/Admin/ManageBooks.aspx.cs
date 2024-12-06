@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using WebGrease.Activities;
 
 namespace LibraryManagementSystem.Admin
 {
@@ -71,6 +72,40 @@ namespace LibraryManagementSystem.Admin
             BindGridView();
         }
 
+        protected void btnSearch_Click(object sender, EventArgs e)
+        {
+            string searchQuery = txtSearch.Text.Trim();
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                // Query to search in all relevant fields
+                string query = @"
+            SELECT * 
+            FROM Books 
+            WHERE 
+                Title LIKE @SearchQuery 
+                OR Author LIKE @SearchQuery 
+                OR Category LIKE @SearchQuery";
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@SearchQuery", "%" + searchQuery + "%");
+
+                SqlDataAdapter adapter = new SqlDataAdapter(cmd);
+                DataTable dt = new DataTable();
+                adapter.Fill(dt);
+
+                gvBooks.DataSource = dt;
+                gvBooks.DataBind();
+            }
+        }
+        protected void btnClearSearch_Click(object sender, EventArgs e)
+        {
+            // Clear the search field
+            txtSearch.Text = string.Empty;
+
+            // Rebind the GridView with all records
+            BindGridView();
+        }
 
         protected void gvBooks_RowEditing(object sender, GridViewEditEventArgs e)
         {
@@ -84,16 +119,37 @@ namespace LibraryManagementSystem.Admin
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                string query = "DELETE FROM Books WHERE BookID=@BookID";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@BookID", bookID);
-                conn.Open();
-                cmd.ExecuteNonQuery();
-                conn.Close();
-            }
+                // Check for active borrow records
+                string checkQuery = "SELECT COUNT(*) FROM BorrowRecords WHERE BookId = @BookID";
+                SqlCommand checkCmd = new SqlCommand(checkQuery, conn);
+                checkCmd.Parameters.AddWithValue("@BookID", bookID);
 
-            BindGridView();  // Rebind the GridView to reflect changes
+                conn.Open();
+                int count = (int)checkCmd.ExecuteScalar();
+                conn.Close();
+
+                if (count > 0)
+                {
+                    // Display error message
+                    lblError.Text = "Cannot delete this book. It is currently referenced in active borrow records.";
+                    lblError.Visible = true;
+                }
+                else
+                {
+                    // Proceed with deletion
+                    string deleteQuery = "DELETE FROM Books WHERE BookID = @BookID";
+                    SqlCommand deleteCmd = new SqlCommand(deleteQuery, conn);
+                    deleteCmd.Parameters.AddWithValue("@BookID", bookID);
+
+                    conn.Open();
+                    deleteCmd.ExecuteNonQuery();
+                    conn.Close();
+
+                    BindGridView(); // Refresh the grid view
+                }
+            }
         }
+
 
         protected void gvBooks_RowCancelingEdit(object sender, GridViewCancelEditEventArgs e)
         {

@@ -2,6 +2,7 @@
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.IO;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 
@@ -15,52 +16,61 @@ namespace LibraryManagementSystem
         {
             if (!IsPostBack)
             {
-                LoadBorrowedBooksReport();
+                ShowBookReport(sender, e); // Load Book Borrow Report by default
             }
         }
-        protected void gvBorrowRecords_RowDataBound(object sender, GridViewRowEventArgs e)
+
+        // Show Book Borrow Report
+        protected void ShowBookReport(object sender, EventArgs e)
         {
-            if (e.Row.RowType == DataControlRowType.DataRow)
-            {
-                // Format BorrowDate
-                DateTime borrowDate;
-                if (DateTime.TryParse(e.Row.Cells[3].Text, out borrowDate))
-                {
-                    e.Row.Cells[3].Text = borrowDate.ToString("yyyy-MM-dd");
-                }
+            pnlBookReport.Visible = true;
+            pnlUserReport.Visible = false;
 
-                // Format ReturnDate
-                DateTime returnDate;
-                if (DateTime.TryParse(e.Row.Cells[4].Text, out returnDate))
-                {
-                    e.Row.Cells[4].Text = returnDate.ToString("yyyy-MM-dd");
-                }
-
-                // Format ReturnedDate
-                DateTime returnedDate;
-                if (DateTime.TryParse(e.Row.Cells[5].Text, out returnedDate))
-                {
-                    e.Row.Cells[5].Text = returnedDate.ToString("yyyy-MM-dd");
-                }
-            }
+            gvBookBorrowReport.DataSource = GetBookBorrowReportData();
+            gvBookBorrowReport.DataBind();
         }
 
-        private void LoadBorrowedBooksReport()
+        // Show User Borrow Report
+        protected void ShowUserReport(object sender, EventArgs e)
+        {
+            pnlBookReport.Visible = false;
+            pnlUserReport.Visible = true;
+
+            gvUserBorrowReport.DataSource = GetUserBorrowReportData();
+            gvUserBorrowReport.DataBind();
+        }
+
+        // Download Book Borrow Report
+        protected void DownloadBookReport(object sender, EventArgs e)
+        {
+            DataTable dt = GetBookBorrowReportData();
+            ExportToExcel(dt, "BookBorrowReport");
+        }
+
+        // Download User Borrow Report
+        protected void DownloadUserReport(object sender, EventArgs e)
+        {
+            DataTable dt = GetUserBorrowReportData();
+            ExportToExcel(dt, "UserBorrowReport");
+        }
+
+        // Fetch Book Borrow Report Data
+        private DataTable GetBookBorrowReportData()
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 string query = @"
                     SELECT 
-                        br.BorrowID,
-                        u.FullName AS Username,
-                        b.Title AS BookTitle,
-                        br.BorrowDate,
-                        br.ReturnDate,
-                        br.ReturnedDate,
+                        br.BorrowID AS [Borrow ID],
+                        u.FullName AS [Username],
+                        b.Title AS [Book Title],
+                        br.BorrowDate AS [Borrow Date],
+                        br.ReturnDate AS [Due Date],
+                        br.ReturnedDate AS [Returned Date],
                         CASE 
                             WHEN br.IsReturned = 1 THEN 'Returned'
                             ELSE 'Not Returned'
-                        END AS Status
+                        END AS [Status]
                     FROM 
                         BorrowRecords br
                     JOIN 
@@ -69,16 +79,72 @@ namespace LibraryManagementSystem
                         Books b ON br.BookID = b.BookID
                     ORDER BY 
                         br.BorrowID ASC;";
-
                 SqlDataAdapter adapter = new SqlDataAdapter(query, conn);
                 DataTable dt = new DataTable();
                 adapter.Fill(dt);
-
-
-
-                gvReport.DataSource = dt;
-                gvReport.DataBind();
+                return dt;
             }
+        }
+
+        // Fetch User Borrow Report Data
+        private DataTable GetUserBorrowReportData()
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                string query = @"
+                    SELECT 
+                        u.UserID AS [User ID],
+                        u.FullName AS [Username],
+                        u.Email AS [Email],
+                        COUNT(br.BorrowID) AS [Total Books Borrowed],
+                        STRING_AGG(b.Title, ', ') AS [Borrowed Books]
+                    FROM 
+                        Users u
+                    LEFT JOIN 
+                        BorrowRecords br ON u.UserID = br.UserID
+                    LEFT JOIN 
+                        Books b ON br.BookID = b.BookID
+                    GROUP BY 
+                        u.UserID, u.FullName, u.Email
+                    ORDER BY 
+                        u.FullName ASC;";
+                SqlDataAdapter adapter = new SqlDataAdapter(query, conn);
+                DataTable dt = new DataTable();
+                adapter.Fill(dt);
+                return dt;
+            }
+        }
+
+        // Export DataTable to Excel
+        private void ExportToExcel(DataTable dt, string fileName)
+        {
+            Response.Clear();
+            Response.Buffer = true;
+            Response.AddHeader("content-disposition", $"attachment;filename={fileName}.xls");
+            Response.ContentType = "application/vnd.ms-excel";
+            Response.Charset = "";
+
+            using (StringWriter sw = new StringWriter())
+            {
+                HtmlTextWriter hw = new HtmlTextWriter(sw);
+
+                GridView gv = new GridView
+                {
+                    DataSource = dt,
+                    AutoGenerateColumns = true
+                };
+                gv.DataBind();
+
+                gv.RenderControl(hw);
+                Response.Output.Write(sw.ToString());
+                Response.Flush();
+                Response.End();
+            }
+        }
+
+        public override void VerifyRenderingInServerForm(Control control)
+        {
+            // Required to avoid runtime error for exporting GridView
         }
     }
 }

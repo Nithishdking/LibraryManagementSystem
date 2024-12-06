@@ -44,8 +44,7 @@ namespace LibraryManagementSystem
                 // Insert User into Database
                 using (SqlConnection conn = new SqlConnection(connectionString))
                 {
-                    string query = "INSERT INTO Users (Username, Password, FullName, Email, ContactNumber) " +
-                                   "VALUES (@Username, @Password, @FullName, @Email, @ContactNumber)";
+                    string query = "INSERT INTO Users (Username, Password, FullName, Email, ContactNumber, IsApproved) VALUES (@Username, @Password, @FullName, @Email, @ContactNumber, 0)";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
@@ -61,7 +60,7 @@ namespace LibraryManagementSystem
                     }
                 }
 
-                Response.Write("<script>alert('Registration successful! Redirecting to login page.'); window.location='UserLogin.aspx';</script>");
+                Response.Write("<script>alert('Registration successful! Wait few minutes for the approval.'); window.location='UserLogin.aspx';</script>");
 
             }
             catch (Exception ex)

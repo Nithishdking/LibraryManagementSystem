@@ -60,6 +60,12 @@
                 <asp:BoundField DataField="Category" HeaderText="Category" />
                 <asp:BoundField DataField="BorrowDate" HeaderText="Borrow Date" DataFormatString="{0:yyyy-MM-dd}" />
                 <asp:BoundField DataField="ReturnDate" HeaderText="Due Date" DataFormatString="{0:yyyy-MM-dd}" />
+                <asp:TemplateField HeaderText="Actions">
+            <ItemTemplate>
+                <asp:Button ID="btnExtendDueDate" runat="server" Text="Extend Due Date" 
+                            CommandName="ExtendDueDate" CommandArgument='<%# Eval("BookId") %>' />
+            </ItemTemplate>
+        </asp:TemplateField>
                 <asp:BoundField DataField="ReturnedDate" HeaderText="Returned Date" DataFormatString="{0:yyyy-MM-dd}" />
                 <asp:TemplateField HeaderText="Return Status">
                     <ItemTemplate>

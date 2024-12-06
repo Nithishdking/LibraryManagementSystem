@@ -76,6 +76,45 @@
     <form id="form1" runat="server">
         <a href="AdminDashboard.aspx" class="back-button">Back to Dashboard</a>
         <h1>Manage Books</h1>
+         <h3>Add New Book</h3>
+  <div class="form-group">
+      <label for="txtbookid">Book ID</label>
+      <asp:TextBox ID="txtbookid" runat="server" Placeholder="Enter book id"></asp:TextBox>
+  </div>
+ <div class="form-group">
+     <label for="txtTitle">Title</label>
+     <asp:TextBox ID="txtTitle" runat="server" Placeholder="Enter book title"></asp:TextBox>
+ </div>
+ <div class="form-group">
+     <label for="txtAuthor">Author</label>
+     <asp:TextBox ID="txtAuthor" runat="server" Placeholder="Enter author name"></asp:TextBox>
+ </div>
+ <div class="form-group">
+     <label for="txtCategory">Category</label>
+     <asp:TextBox ID="txtCategory" runat="server" Placeholder="Enter category"></asp:TextBox>
+ </div>
+ <div class="form-group">
+     <label for="txtPublishedYear">Published Year</label>
+     <asp:TextBox ID="txtPublishedYear" runat="server" Placeholder="Enter year"></asp:TextBox>
+ </div>
+
+
+ <div class="actions">
+     <asp:Button ID="btnAdd" runat="server" Text="Add Book" OnClick="btnAdd_Click" />
+     <asp:Label ID="lblMessage" runat="server" CssClass="message-label" ForeColor="Red"></asp:Label>
+ </div>
+
+        
+<div class="form-group">
+    <label for="txtSearch">Search</label>
+    <asp:TextBox ID="txtSearch" runat="server" Placeholder="Search by title, author, or category"></asp:TextBox>
+</div>
+<div class="actions">
+    <asp:Button ID="btnSearch" runat="server" Text="Search" OnClick="btnSearch_Click" />
+    <asp:Button ID="btnClearSearch" runat="server" Text="Clear" OnClick="btnClearSearch_Click" />
+</div>
+        <asp:Label ID="lblError" runat="server" ForeColor="Red" Visible="false"></asp:Label>
+
        <asp:GridView ID="gvBooks" runat="server" AutoGenerateColumns="False" DataKeyNames="BookID"
               OnRowEditing="gvBooks_RowEditing" OnRowDeleting="gvBooks_RowDeleting"
               OnRowCancelingEdit="gvBooks_RowCancelingEdit" OnRowUpdating="gvBooks_RowUpdating">
@@ -113,33 +152,6 @@
     </Columns>
 </asp:GridView>
 
-        <h3>Add New Book</h3>
-         <div class="form-group">
-             <label for="txtbookid">Book ID</label>
-             <asp:TextBox ID="txtbookid" runat="server" Placeholder="Enter book id"></asp:TextBox>
-         </div>
-        <div class="form-group">
-            <label for="txtTitle">Title</label>
-            <asp:TextBox ID="txtTitle" runat="server" Placeholder="Enter book title"></asp:TextBox>
-        </div>
-        <div class="form-group">
-            <label for="txtAuthor">Author</label>
-            <asp:TextBox ID="txtAuthor" runat="server" Placeholder="Enter author name"></asp:TextBox>
-        </div>
-        <div class="form-group">
-            <label for="txtCategory">Category</label>
-            <asp:TextBox ID="txtCategory" runat="server" Placeholder="Enter category"></asp:TextBox>
-        </div>
-        <div class="form-group">
-            <label for="txtPublishedYear">Published Year</label>
-            <asp:TextBox ID="txtPublishedYear" runat="server" Placeholder="Enter year"></asp:TextBox>
-        </div>
-
-
-        <div class="actions">
-            <asp:Button ID="btnAdd" runat="server" Text="Add Book" OnClick="btnAdd_Click" />
-            <asp:Label ID="lblMessage" runat="server" CssClass="message-label" ForeColor="Red"></asp:Label>
-        </div>
-    </form>
+           </form>
 </body>
 </html>

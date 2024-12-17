@@ -3,6 +3,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Configuration;
 using System.Web.UI.WebControls;
+using System.Web.UI;
 
 namespace LibraryManagementSystem.Admin
 {
@@ -18,13 +19,36 @@ namespace LibraryManagementSystem.Admin
                 BindPendingUsersGridView();
             }
         }
+        protected void btnSearch_Click(object sender, EventArgs e)
+        {
+            string username = txtSearch.Text.Trim();
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                string query = "SELECT UserID, Username, FullName, Email, ContactNumber FROM Users WHERE Username LIKE @Username AND IsApproved = 1";
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@Username", "%" + username + "%");
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+
+                gvUsers.DataSource = dt;
+                gvUsers.DataBind();
+            }
+        }
+        protected void btnClearSearch_Click(object sender, EventArgs e)
+        {
+            txtSearch.Text = string.Empty;  // Clears the search text box
+            BindApprovedUsersGridView();    // Rebinds the GridView with all approved users
+        }
 
         // Bind Pending Users (IsApproved = 0) to GridView
         private void BindPendingUsersGridView()
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                string query = "SELECT UserID, Username, FullName, ContactNumber, Email FROM Users WHERE IsApproved = 0";
+                string query = "SELECT UserID, Username, FullName, ContactNumber, Email, IsApproved FROM Users WHERE IsApproved = 0";
                 SqlDataAdapter da = new SqlDataAdapter(query, conn);
                 DataTable dt = new DataTable();
                 da.Fill(dt);
@@ -39,7 +63,7 @@ namespace LibraryManagementSystem.Admin
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                string query = "SELECT UserID, Username, FullName, Email, ContactNumber FROM Users WHERE IsApproved = 1";
+                string query = "SELECT UserID, Username, FullName, Email, ContactNumber, IsApproved FROM Users";
                 SqlDataAdapter da = new SqlDataAdapter(query, conn);
                 DataTable dt = new DataTable();
                 da.Fill(dt);
@@ -77,8 +101,8 @@ namespace LibraryManagementSystem.Admin
                 {
                     conn.Open();
 
-                    // Reject the user by deleting from the Users table
-                    string rejectQuery = "DELETE FROM Users WHERE UserID = @UserID AND IsApproved = 0";
+                    // Reject the user by updating the IsApproved field to -1
+                    string rejectQuery = "UPDATE Users SET IsApproved = -1 WHERE UserID = @UserID";
                     SqlCommand rejectCmd = new SqlCommand(rejectQuery, conn);
                     rejectCmd.Parameters.AddWithValue("@UserID", userID);
                     rejectCmd.ExecuteNonQuery();
@@ -86,35 +110,41 @@ namespace LibraryManagementSystem.Admin
 
                 // Refresh the pending users grid
                 BindPendingUsersGridView();
+                BindApprovedUsersGridView();
             }
         }
-
-        // Search functionality for Users GridView
-        protected void btnSearch_Click(object sender, EventArgs e)
+        protected void gvUsers_RowDataBound(object sender, GridViewRowEventArgs e)
         {
-            string username = txtSearch.Text.Trim();
-
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            // Check if the row is a data row
+            if (e.Row.RowType == DataControlRowType.DataRow && (e.Row.RowState & DataControlRowState.Edit) > 0)
             {
-                string query = "SELECT UserID, Username, FullName, Email, ContactNumber FROM Users WHERE Username LIKE @Username AND IsApproved = 1";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@Username", "%" + username + "%");
+                // Find the DropDownList control in the EditItemTemplate
+                DropDownList ddlStatus = (DropDownList)e.Row.FindControl("ddlStatus");
 
-                SqlDataAdapter da = new SqlDataAdapter(cmd);
-                DataTable dt = new DataTable();
-                da.Fill(dt);
+                // Get the current status value from the data-bound item
+                int status = Convert.ToInt32(DataBinder.Eval(e.Row.DataItem, "IsApproved"));
 
-                gvUsers.DataSource = dt;
-                gvUsers.DataBind();
+                // Set the selected value of the dropdown based on the current status
+                if (ddlStatus != null)
+                {
+                    ddlStatus.SelectedValue = status.ToString();
+
+                    // Disable the dropdown if the status is 'Approved' (1) or 'Pending' (0)
+                    if (status == 1 || status == 0)
+                    {
+                        ddlStatus.Enabled = false; // Disable the dropdown
+                    }
+                    else
+                    {
+                        ddlStatus.Enabled = true; // Enable the dropdown for other statuses (like 'Rejected')
+                    }
+                }
             }
         }
 
-        // Clear search results and reload the approved users
-        protected void btnClearSearch_Click(object sender, EventArgs e)
-        {
-            txtSearch.Text = string.Empty;
-            BindApprovedUsersGridView();
-        }
+
+
+
 
         // Edit User details in GridView
         protected void gvUsers_RowEditing(object sender, GridViewEditEventArgs e)
@@ -135,19 +165,17 @@ namespace LibraryManagementSystem.Admin
         {
             GridViewRow row = gvUsers.Rows[e.RowIndex];
             int userID = Convert.ToInt32(gvUsers.DataKeys[e.RowIndex].Value);
-            string username = ((TextBox)row.Cells[1].Controls[0]).Text;
-            string fullname = ((TextBox)row.Cells[2].Controls[0]).Text;
-            string email = ((TextBox)row.Cells[3].Controls[0]).Text;
-            string contactNumber = ((TextBox)row.Cells[4].Controls[0]).Text;
 
+            // Get the updated status from the DropDownList
+            DropDownList ddlStatus = (DropDownList)row.FindControl("ddlStatus");
+            int updatedStatus = Convert.ToInt32(ddlStatus.SelectedValue);
+
+            // Update the user's status in the database
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                string query = "UPDATE Users SET Username = @Username, FullName = @FullName, Email = @Email, ContactNumber = @ContactNumber WHERE UserID = @UserID";
+                string query = "UPDATE Users SET IsApproved = @Status WHERE UserID = @UserID";
                 SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@Username", username);
-                cmd.Parameters.AddWithValue("@FullName", fullname);
-                cmd.Parameters.AddWithValue("@Email", email);
-                cmd.Parameters.AddWithValue("@ContactNumber", contactNumber);
+                cmd.Parameters.AddWithValue("@Status", updatedStatus);
                 cmd.Parameters.AddWithValue("@UserID", userID);
 
                 conn.Open();
@@ -155,6 +183,7 @@ namespace LibraryManagementSystem.Admin
                 conn.Close();
             }
 
+            // Exit edit mode and rebind the grid
             gvUsers.EditIndex = -1;
             BindApprovedUsersGridView();
         }

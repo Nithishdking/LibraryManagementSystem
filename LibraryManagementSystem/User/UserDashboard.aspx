@@ -5,241 +5,229 @@
 <head>
     <title>User Dashboard - Library Management System</title>
     <style>
-       /* Reset styles */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-}
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+        }
 
-/* Navbar Styles */
-.navbar {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 1000;
-}
+        /* Navbar Styles */
+        .navbar {
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
 
-.navbar .navbar-left {
-    font-size: 20px;
-    font-weight: bold;
-}
+        .navbar .navbar-left {
+            font-size: 24px;
+            font-weight: bold;
+        }
 
-.navbar .navbar-right {
-    display: flex;
-    font-size: 18px;
-    gap: 15px;
-}
+        .navbar .navbar-right a {
+            text-decoration: none;
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
 
-.navbar .navbar-right a {
-    color: white;
-    text-decoration: none;
-    padding: 8px 12px;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
-}
+        .navbar .navbar-right a:hover {
+            background-color: #2e7d32;
+        }
 
-.navbar .navbar-right a:hover {
-    background-color: #0056b3;
-}
-/* Dashboard Container */
-.dashboard-container {
-    width: 80%;
-    margin: 100px auto; /* Account for the fixed navbar */
-    text-align: center;
-}
-
-.dashboard-container h3 {
-    
-    margin-bottom: 30px;
-}
-.borrow-details-link {
-    position: absolute; /* Position it relative to the navbar */
-    top: 60px; /* Space below the navbar */
-    right: 20px; /* Align to the left */
-}
-
-.borrow-details-link .link-btn {
-    display: inline-block;
-    background-color: #007bff; /* Button background color */
-    color: white; /* Text color */
-    text-decoration: none; /* Remove underline */
-    font-size: 14px; /* Font size */
-    font-weight: bold; /* Make the text bold */
-    padding: 10px 20px; /* Add padding for size */
-    border-radius: 5px; /* Rounded corners */ /* Subtle shadow */
-}
-
-.borrow-details-link .link-btn:hover {
-    background-color: #0056b3; /* Darker blue on hover */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Add a shadow effect */
-    transform: scale(1.05); /* Slightly enlarge the button */
-}
-
+        /* Dashboard Container */
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 80px auto;
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
 
         .welcome-message {
-            font-size: 24px;
-            color: #007bff;
-            margin-bottom: 20px;
-            margin: 50px auto;
-text-align: center
+            font-size: 28px;
+            color: #4CAF50;
+            text-align: center;
+            margin-bottom: 25px;
         }
+
+        /* Search Form */
         .search-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 20px;
-}
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
 
-.search-label {
-    font-size: 18px;
-    font-weight: bold;
-    color: #333;
-}
+        .search-input {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            width: 350px;
+            font-size: 16px;
+        }
 
-.search-input {
-    padding: 10px;
-    font-size: 16px;
-    border: 2px solid #ccc;
-    border-radius: 5px;
-    width: 300px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
+        .search-btn, .clear-btn {
+            padding: 12px 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            color: #fff;
+            transition: background 0.3s;
+        }
 
-.search-btn,
-.clear-btn {
-    padding: 10px 20px;
-    background-color: #4CAF50; /* Green button */
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-}
+        .search-btn {
+            background-color: #4CAF50;
+        }
 
-.search-btn:hover,
-.clear-btn:hover {
-    background-color: #45a049; /* Darker green on hover */
-}
+        .search-btn:hover {
+            background-color: #45a049;
+        }
 
-.clear-btn {
-    background-color: #f44336; /* Red button for clear */
-}
+        .clear-btn {
+            background-color: #f44336;
+        }
 
-.clear-btn:hover {
-    background-color: #e31a1a;
-}
+        .clear-btn:hover {
+            background-color: #e53935;
+        }
 
-h3 {
-    margin-top: 20px;
-    font-size: 24px;
-    color: #333;
-}
+        /* Borrow History Link */
+        .borrow-details-link {
+            text-align: right;
+            margin-bottom: 15px;
+        }
 
+        .link-btn {
+            text-decoration: none;
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        .link-btn:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        /* Table Styles */
         table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 20px 0;
-    background-color: #fff;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
 
-table th, table td {
-    padding: 10px;
-    text-align: left;
-    border: 1px solid #ddd;
-}
+        table th, table td {
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
 
-table th {
-    background-color: #4CAF50;
-    color: white;
-}
+        table th {
+            background-color: #4CAF50;
+            color: white;
+            text-transform: uppercase;
+        }
 
-table tr:nth-child(even) {
-    background-color: #f2f2f2;
-}
+        table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
 
-.action-btn {
-    color: #007bff;
-    text-decoration: none;
-    font-weight: bold;
-}
+        .action-btn {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background 0.3s;
+            font-weight: bold;
+        }
 
-.action-btn:hover {
-    text-decoration: underline;
-}}
+        .action-btn:hover {
+            background-color: #0056b3;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .search-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .search-input {
+                width: 100%;
+            }
+
+            .dashboard-container {
+                padding: 15px;
+            }
+        }
     </style>
+
 </head>
 <body>
-       <div class="navbar">
-    <!-- Left side: Website name -->
-    <div class="navbar-left">
-         Dashboard
+    <!-- Navbar -->
+    <div class="navbar">
+        <div class="navbar-left">User Dashboard</div>
+        <div class="navbar-right">
+            <a href="/Home.aspx" id="btnLogout" runat="server" OnClick="Logout_Click">Logout</a>
+        </div>
     </div>
 
-    <!-- Right side: Logout button -->
-    <div class="navbar-right">
-        <a href="/Home.aspx" id="btnLogout" runat="server" OnClick="Logout_Click">Logout</a>
-    </div>
-</div>
+    <!-- Main Dashboard Content -->
     <form id="form1" runat="server">
-    <!-- Navigation Bar -->
-    <!-- Navigation Bar -->
-    
-     
-    <!-- Dashboard Container -->
-        
-    <div class="dashboard-container">
-         
-        <div class="welcome-message">
-            <asp:Label ID="lblWelcome" runat="server" Text=""></asp:Label>
-        </div>
-             <div class="borrow-details-link">
-    <a href="BorrowHistory.aspx" class="link-btn">View Borrow History</a>
-</div>
-        <h3>Available Books</h3>
-        <div class="search-form">
-            <asp:TextBox ID="txtSearch" runat="server" placeholder="Search by Title, Author, or Category" CssClass="search-input"></asp:TextBox>
-            <asp:Button ID="btnSearch" runat="server" Text="Search" OnClick="SearchBooks" CssClass="search-btn" />
-            <asp:Button ID="btnClear" runat="server" Text="Clear" CssClass="clear-btn" OnClick="ClearSearch" />
-        </div>
+        <div class="dashboard-container">
+            <div class="welcome-message">
+                <asp:Label ID="lblWelcome" runat="server" Text="Welcome to the Library!"></asp:Label>
+            </div>
 
-        </div>
-        <!-- Available Books Table -->
-        <table>
-            <%--<thead>
-                <tr>
-                    <th>Book ID</th>
-                    <th>Title</th>
-                    <th>Author</th>
-                    <th>Category</th>
-                    <th>Year of Publication</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>--%>
-            <tbody>
+            <!-- Borrow History Link -->
+            <div class="borrow-details-link">
+                <a href="BorrowHistory.aspx" class="link-btn">View Borrow History</a>
+            </div>
 
-                <asp:GridView ID="gvAvailableBooks" runat="server" AutoGenerateColumns="False" OnRowCommand="gvAvailableBooks_RowCommand">
+            <!-- Search Section -->
+            <div class="search-container">
+                <asp:TextBox ID="txtSearch" runat="server" placeholder="Search by Title, Author, or Category" CssClass="search-input"></asp:TextBox>
+                <asp:Button ID="btnSearch" runat="server" Text="Search" OnClick="SearchBooks" CssClass="search-btn" />
+                <asp:Button ID="btnClear" runat="server" Text="Clear" CssClass="clear-btn" OnClick="ClearSearch" />
+            </div>
+
+            <!-- Table Section -->
+            <table>
+                <asp:GridView ID="gvAvailableBooks" runat="server" AutoGenerateColumns="False" OnRowCommand="gvAvailableBooks_RowCommand" CssClass="grid">
                     <Columns>
-                        <asp:BoundField DataField="BookID" HeaderText="Book ID" SortExpression="BookID" />
-                        <asp:BoundField DataField="Title" HeaderText="Title" SortExpression="Title" />
-                        <asp:BoundField DataField="Author" HeaderText="Author" SortExpression="Author" />
-                        <asp:BoundField DataField="Category" HeaderText="Category" SortExpression="Category" />
-                        <asp:BoundField DataField="PublishedYear" HeaderText="Year of Publication" SortExpression="PublishedYear" />
+                        <asp:BoundField DataField="BookID" HeaderText="Book ID" />
+                        <asp:BoundField DataField="Title" HeaderText="Title" />
+                        <asp:BoundField DataField="Author" HeaderText="Author" />
+                        <asp:BoundField DataField="Category" HeaderText="Category" />
+                        <asp:BoundField DataField="PublishedYear" HeaderText="Year of Publication" />
+                        <asp:BoundField DataField="Copies" HeaderText="Available Copies" />
                         <asp:TemplateField>
                             <ItemTemplate>
                                 <asp:Button ID="btnBorrow" runat="server" Text="Borrow" CssClass="action-btn" CommandName="Borrow" CommandArgument='<%# Eval("BookID") %>' />
@@ -247,15 +235,16 @@ table tr:nth-child(even) {
                         </asp:TemplateField>
                     </Columns>
                 </asp:GridView>
-            </tbody>
-        </table>
-    </div>
-</form>
-    <script type="text/javascript">
-    function ClearSearch() {
-        document.getElementById('<%= txtSearch.ClientID %>').value = ''; // Clear the input field
-    }
-    </script>
+            </table>
+        </div>
+    </form>
+     <script type="text/javascript">
+         function ClearSearch() {
+             document.getElementById('<%= txtSearch.ClientID %>').value = ''; // Clear the input field
+         }
+     </script>
 
 </body>
 </html>
+
+

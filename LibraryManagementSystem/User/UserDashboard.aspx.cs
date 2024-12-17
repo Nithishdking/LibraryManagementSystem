@@ -68,7 +68,7 @@ namespace LibraryManagementSystem.User
         // Load available books from the database
         private void LoadAvailableBooks()
         {
-            string query = "SELECT BookId, Title, Author, Category, PublishedYear FROM Books WHERE IsAvailable = 1";
+            string query = "SELECT BookId, Title, Author, Category, PublishedYear, Copies FROM Books ";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
@@ -118,51 +118,65 @@ namespace LibraryManagementSystem.User
 
         private void BorrowBook(int bookID)
         {
-            // Queries for updating Books table and inserting into BorrowRecords
-           // lblWelcome.Text = GetUserIDByUsername(Session["Username"].ToString()).ToString();
-            string updateBookQuery = "UPDATE Books SET IsAvailable = 0 WHERE BookId = @BookId";
-            string insertBorrowRecordQuery = @"
-                INSERT INTO BorrowRecords (BookId, UserId, BorrowDate, ReturnDate, IsReturned)
-                VALUES (@BookId, @UserId, GETDATE(), DATEADD(DAY, 14, GETDATE()), 0)";
+            string checkCopiesQuery = "SELECT Copies FROM Books WHERE BookId = @BookId";
+            string checkExistingBorrowQuery = "SELECT COUNT(*) FROM BorrowRecords WHERE BookId = @BookId AND UserId = @UserId AND IsReturned = 0";
+            string updateBookCopiesQuery = "UPDATE Books SET Copies = Copies - 1 WHERE BookId = @BookId";
+            string insertBorrowRecordQuery = "INSERT INTO BorrowRecords (BookId, UserId, BorrowDate, ReturnDate, IsReturned) VALUES (@BookId, @UserId, GETDATE(), DATEADD(DAY, 14, GETDATE()), 0)";
 
-             //lblWelcome.Text = GetUserIDByUsername(Session["Username"].ToString()).ToString() + "9";
+            int userId = GetUserIDByUsername(Session["Username"].ToString());
+
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
                 using (SqlTransaction transaction = conn.BeginTransaction())
                 {
-                    //lblWelcome.Text = GetUserIDByUsername(Session["Username"].ToString()).ToString() + "10";
                     try
                     {
-                        // Update the Books table to mark the book as borrowed
-                        SqlCommand updateBookCmd = new SqlCommand(updateBookQuery, conn, transaction);
+                        // Check if user already borrowed the book
+                        SqlCommand checkExistingBorrowCmd = new SqlCommand(checkExistingBorrowQuery, conn, transaction);
+                        checkExistingBorrowCmd.Parameters.AddWithValue("@BookId", bookID);
+                        checkExistingBorrowCmd.Parameters.AddWithValue("@UserId", userId);
+                        int borrowCount = (int)checkExistingBorrowCmd.ExecuteScalar();
+
+                        if (borrowCount > 0)
+                        {
+                            Response.Write("<script>alert('You have already borrowed this book and not returned it yet.');</script>");
+                            transaction.Rollback();
+                            return;
+                        }
+
+                        // Check copies available
+                        SqlCommand checkCopiesCmd = new SqlCommand(checkCopiesQuery, conn, transaction);
+                        checkCopiesCmd.Parameters.AddWithValue("@BookId", bookID);
+                        int copiesAvailable = (int)checkCopiesCmd.ExecuteScalar();
+
+                        if (copiesAvailable <= 0)
+                        {
+                            Response.Write("<script>alert('No copies of this book are currently available.');</script>");
+                            transaction.Rollback();
+                            return;
+                        }
+
+                        // Reduce copies in Books table
+                        SqlCommand updateBookCmd = new SqlCommand(updateBookCopiesQuery, conn, transaction);
                         updateBookCmd.Parameters.AddWithValue("@BookId", bookID);
                         updateBookCmd.ExecuteNonQuery();
-                        //lblWelcome.Text = GetUserIDByUsername(Session["Username"].ToString()).ToString() + "11";
-                        // Insert a new record into BorrowRecords table
+
+                        // Insert a new record in BorrowRecords table
                         SqlCommand insertBorrowCmd = new SqlCommand(insertBorrowRecordQuery, conn, transaction);
                         insertBorrowCmd.Parameters.AddWithValue("@BookId", bookID);
-                        //lblWelcome.Text = GetUserIDByUsername(Session["Username"].ToString()).ToString()+"8";
-                        insertBorrowCmd.Parameters.AddWithValue("@UserId", GetUserIDByUsername(Session["Username"].ToString())); 
-                        // Method to get current user ID
+                        insertBorrowCmd.Parameters.AddWithValue("@UserId", userId);
                         insertBorrowCmd.ExecuteNonQuery();
-                        //lblWelcome.Text = GetUserIDByUsername(Session["Username"].ToString()).ToString()+"00";
 
-                        // Commit the transaction
                         transaction.Commit();
 
-                        // Refresh the available books list after borrowing
                         LoadAvailableBooks();
-
-                        // Display a success message
                         Response.Write("<script>alert('Book borrowed successfully!');</script>");
                     }
                     catch (Exception ex)
                     {
-                        // Rollback the transaction in case of error
                         transaction.Rollback();
-                        Response.Write($"<script>alert('Error borrowing book: {ex.Message}');</script>");
-                        //lblWelcome.Text = ex.Message;
+                        Response.Write($"<script>alert('Error: {ex.Message}');</script>");
                     }
                 }
             }

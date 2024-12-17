@@ -4,7 +4,6 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using WebGrease.Activities;
 
 namespace LibraryManagementSystem.Admin
 {
@@ -18,11 +17,8 @@ namespace LibraryManagementSystem.Admin
             {
                 // Bind the GridView only on the first page load
                 BindGridView();
-
-                }
+            }
         }
-
-
 
         private void BindGridView()
         {
@@ -39,53 +35,98 @@ namespace LibraryManagementSystem.Admin
 
         protected void btnAdd_Click(object sender, EventArgs e)
         {
-            int bookId = Convert.ToInt32(txtbookid.Text);
             string title = txtTitle.Text;
             string author = txtAuthor.Text;
             string category = txtCategory.Text;
             int publishedYear = Convert.ToInt32(txtPublishedYear.Text);
+            int copies = Convert.ToInt32(txtCopies.Text);
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            // Check if the book title already exists
+            if (CheckIfTitleExists(title))
             {
-                string query = "INSERT INTO Books (BookId,Title, Author, Category, PublishedYear, IsAvailable) VALUES (@BookId, @Title, @Author, @Category, @PublishedYear, @IsAvailable)";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@BookId", bookId);
-                cmd.Parameters.AddWithValue("@Title", title);
-                cmd.Parameters.AddWithValue("@Author", author);
-                cmd.Parameters.AddWithValue("@Category", category);
-                cmd.Parameters.AddWithValue("@PublishedYear", publishedYear);
-                cmd.Parameters.AddWithValue("@IsAvailable", true);  // Inserting CheckBox value
-                conn.Open();
-                cmd.ExecuteNonQuery();
-                conn.Close();
+                lblMessage.Text = "The book title is already entered.";
+                lblMessage.ForeColor = System.Drawing.Color.Red;
+                return;
             }
 
-            lblMessage.Text = "Book added successfully!";
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connectionString))
+                {
+                    string query = "INSERT INTO Books (Title, Author, Category, PublishedYear, Copies) " +
+                                   "VALUES (@Title, @Author, @Category, @PublishedYear, @Copies)";
+                    SqlCommand cmd = new SqlCommand(query, conn);
+                    cmd.Parameters.AddWithValue("@Title", title);
+                    cmd.Parameters.AddWithValue("@Author", author);
+                    cmd.Parameters.AddWithValue("@Category", category);
+                    cmd.Parameters.AddWithValue("@PublishedYear", publishedYear);
+                    cmd.Parameters.AddWithValue("@Copies", copies);
 
-            txtbookid.Text = string.Empty;
-            txtTitle.Text = string.Empty;
-            txtAuthor.Text = string.Empty;
-            txtCategory.Text = string.Empty;
-            txtPublishedYear.Text = string.Empty;
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                    conn.Close();
 
-            
-            BindGridView();
+                    lblMessage.Text = "Book added successfully!";
+                    lblMessage.ForeColor = System.Drawing.Color.Green;
+                }
+
+                // Clear the input fields
+                txtTitle.Text = string.Empty;
+                txtAuthor.Text = string.Empty;
+                txtCategory.Text = string.Empty;
+                txtPublishedYear.Text = string.Empty;
+                txtCopies.Text = string.Empty;
+
+                // Refresh the GridView
+                BindGridView();
+            }
+            catch (SqlException ex)
+            {
+                // If it's a unique constraint violation, show a custom error message
+                if (ex.Number == 2627)  // Error number for unique constraint violation
+                {
+                    lblMessage.Text = "The book title is already entered.";
+                    lblMessage.ForeColor = System.Drawing.Color.Red;
+                    
+                }
+                else
+                {
+                    // Handle other SQL exceptions
+                    lblMessage.Text = "An error occurred while adding the book.";
+                    lblMessage.ForeColor = System.Drawing.Color.Red;
+                }
+                
+            }
         }
 
+        private bool CheckIfTitleExists(string title)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                string query = "SELECT COUNT(*) FROM Books WHERE Title = @Title";
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@Title", title);
+
+                conn.Open();
+                int count = (int)cmd.ExecuteScalar();
+                conn.Close();
+
+                return count > 0; // Returns true if the title already exists
+            }
+        }
         protected void btnSearch_Click(object sender, EventArgs e)
         {
             string searchQuery = txtSearch.Text.Trim();
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                // Query to search in all relevant fields
                 string query = @"
-            SELECT * 
-            FROM Books 
-            WHERE 
-                Title LIKE @SearchQuery 
-                OR Author LIKE @SearchQuery 
-                OR Category LIKE @SearchQuery";
+                SELECT * 
+                FROM Books 
+                WHERE 
+                    Title LIKE @SearchQuery 
+                    OR Author LIKE @SearchQuery 
+                    OR Category LIKE @SearchQuery";
 
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@SearchQuery", "%" + searchQuery + "%");
@@ -98,19 +139,17 @@ namespace LibraryManagementSystem.Admin
                 gvBooks.DataBind();
             }
         }
+
         protected void btnClearSearch_Click(object sender, EventArgs e)
         {
-            // Clear the search field
             txtSearch.Text = string.Empty;
-
-            // Rebind the GridView with all records
             BindGridView();
         }
 
         protected void gvBooks_RowEditing(object sender, GridViewEditEventArgs e)
         {
             gvBooks.EditIndex = e.NewEditIndex;
-            BindGridView();  // Rebind the GridView to reflect changes
+            BindGridView();
         }
 
         protected void gvBooks_RowDeleting(object sender, GridViewDeleteEventArgs e)
@@ -119,8 +158,7 @@ namespace LibraryManagementSystem.Admin
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                // Check for active borrow records
-                string checkQuery = "SELECT COUNT(*) FROM BorrowRecords WHERE BookId = @BookID";
+                string checkQuery = "SELECT COUNT(*) FROM BorrowRecords WHERE BookId = @BookID AND IsReturned = 0";
                 SqlCommand checkCmd = new SqlCommand(checkQuery, conn);
                 checkCmd.Parameters.AddWithValue("@BookID", bookID);
 
@@ -130,13 +168,11 @@ namespace LibraryManagementSystem.Admin
 
                 if (count > 0)
                 {
-                    // Display error message
-                    lblError.Text = "Cannot delete this book. It is currently referenced in active borrow records.";
-                    lblError.Visible = true;
+                    lblMessage.Text = "Cannot delete this book. It is currently borrowed.";
+                    lblMessage.Visible = true;
                 }
                 else
                 {
-                    // Proceed with deletion
                     string deleteQuery = "DELETE FROM Books WHERE BookID = @BookID";
                     SqlCommand deleteCmd = new SqlCommand(deleteQuery, conn);
                     deleteCmd.Parameters.AddWithValue("@BookID", bookID);
@@ -145,16 +181,14 @@ namespace LibraryManagementSystem.Admin
                     deleteCmd.ExecuteNonQuery();
                     conn.Close();
 
-                    BindGridView(); // Refresh the grid view
+                    BindGridView();
                 }
             }
         }
-
-
         protected void gvBooks_RowCancelingEdit(object sender, GridViewCancelEditEventArgs e)
         {
-            gvBooks.EditIndex = -1;  // Exit Edit mode
-            BindGridView();  // Rebind the GridView to reflect changes
+            gvBooks.EditIndex = -1;
+            BindGridView();
         }
 
         protected void gvBooks_RowUpdating(object sender, GridViewUpdateEventArgs e)
@@ -165,18 +199,17 @@ namespace LibraryManagementSystem.Admin
             string author = ((TextBox)row.Cells[2].Controls[0]).Text;
             string category = ((TextBox)row.Cells[3].Controls[0]).Text;
             int publishedYear = Convert.ToInt32(((TextBox)row.Cells[4].Controls[0]).Text);
-            bool isAvailable = ((CheckBox)row.Cells[5].FindControl("chkIsAvailable")).Checked;
-            // Get the availability value
+            int copies = Convert.ToInt32(((TextBox)row.Cells[5].Controls[0]).Text);
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                string query = "UPDATE Books SET Title=@Title, Author=@Author, Category=@Category, PublishedYear=@PublishedYear, IsAvailable=@IsAvailable WHERE BookID=@BookID";
+                string query = "UPDATE Books SET Title=@Title, Author=@Author, Category=@Category, PublishedYear=@PublishedYear, Copies=@Copies WHERE BookID=@BookID";
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@Title", title);
                 cmd.Parameters.AddWithValue("@Author", author);
                 cmd.Parameters.AddWithValue("@Category", category);
                 cmd.Parameters.AddWithValue("@PublishedYear", publishedYear);
-                cmd.Parameters.AddWithValue("@IsAvailable", isAvailable);
+                cmd.Parameters.AddWithValue("@Copies", copies);
                 cmd.Parameters.AddWithValue("@BookID", bookID);
 
                 conn.Open();
@@ -184,8 +217,8 @@ namespace LibraryManagementSystem.Admin
                 conn.Close();
             }
 
-            gvBooks.EditIndex = -1;  // Exit Edit mode
-            BindGridView();  // Rebind the GridView to reflect changes
+            gvBooks.EditIndex = -1;
+            BindGridView();
         }
     }
 }

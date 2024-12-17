@@ -39,7 +39,7 @@ namespace LibraryManagementSystem.User
         /// </summary>
         private bool AuthenticateUser(string username, string password)
         {
-            string hashedPassword = HashPassword(password); // Hash the entered password
+            string hashedPassword = HashPassword(password);
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
@@ -48,14 +48,11 @@ namespace LibraryManagementSystem.User
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Username", username);
-                    cmd.Parameters.AddWithValue("@Password", hashedPassword); // Compare hashed passwords
+                    cmd.Parameters.AddWithValue("@Password", hashedPassword);
 
                     conn.Open();
                     int count = Convert.ToInt32(cmd.ExecuteScalar());
                     conn.Close();
-
-                    // Debugging output to confirm query result
-                    System.Diagnostics.Debug.WriteLine("Authentication Count: " + count);
 
                     return count > 0;
                 }
@@ -67,72 +64,68 @@ namespace LibraryManagementSystem.User
             string userName = username.Text.Trim();
             string userPassword = password.Text.Trim();
 
-            // Debugging output for entered values
-            System.Diagnostics.Debug.WriteLine("Entered Username: " + userName);
-            System.Diagnostics.Debug.WriteLine("Entered Password: " + userPassword);
-
             bool isAuthenticated = AuthenticateUser(userName, userPassword);
 
             if (isAuthenticated)
             {
-                // Check if the user's account is approved
-                if (IsUserApproved(userName))
+                // Retrieve the user status
+                int userStatus = GetUserStatus(userName);
+
+                if (userStatus == 1)
                 {
-                    // Retrieve the UserID from the database
                     int userId = GetUserId(userName);
-
-                    // Set session variables for authenticated user
                     Session["Username"] = userName;
-                    Session["UserId"] = userId; // Set the logged-in user's ID
+                    Session["UserId"] = userId;
 
-                    // Debugging output
-                    System.Diagnostics.Debug.WriteLine("User Authenticated. UserId: " + userId);
-
-                    // Redirect to User Dashboard
                     Response.Redirect("UserDashboard.aspx");
                 }
-                else
+                else if (userStatus == 0)
                 {
-                    // Display error message if the user is not approved
-                    loginError.Text = "Your account is not approved yet. Please contact admin.";
+                    loginError.Text = "Your account is pending approval. Please wait 24 hours for approval.";
                     loginError.Visible = true;
-
-                    // Debugging output
-                    System.Diagnostics.Debug.WriteLine("User not approved!");
+                }
+                else if (userStatus == -1)
+                {
+                    loginError.Text = "Your account has been rejected. Please contact the admin.";
+                    loginError.Visible = true;
                 }
             }
             else
             {
-                // Display login error message
                 loginError.Text = "Invalid Username or Password!";
                 loginError.Visible = true;
-
-                // Debugging output
-                System.Diagnostics.Debug.WriteLine("Authentication Failed!");
             }
         }
 
         /// <summary>
-        /// Checks if the user's account is approved.
+        /// Retrieves the user's status from the database.
         /// </summary>
-        private bool IsUserApproved(string username)
+        private int GetUserStatus(string username)
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                string query = "SELECT COUNT(*) FROM Users WHERE Username = @Username AND IsApproved = 1";
+                string query = "SELECT IsApproved FROM Users WHERE Username = @Username";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@Username", username);
 
                     conn.Open();
-                    int count = (int)cmd.ExecuteScalar();
+                    object result = cmd.ExecuteScalar();
                     conn.Close();
 
-                    return count > 0; // Return true if user is approved
+                    if (result != null)
+                    {
+                        return Convert.ToInt32(result);
+                    }
+                    else
+                    {
+                        throw new Exception("User status not found for the provided username.");
+                    }
                 }
             }
         }
+
         /// <summary>
         /// Retrieves the UserID from the database based on the provided username.
         /// </summary>
@@ -152,7 +145,7 @@ namespace LibraryManagementSystem.User
 
                     if (result != null)
                     {
-                        return Convert.ToInt32(result); // Return the UserID if found
+                        return Convert.ToInt32(result);
                     }
                     else
                     {
@@ -161,7 +154,5 @@ namespace LibraryManagementSystem.User
                 }
             }
         }
-
-
     }
 }

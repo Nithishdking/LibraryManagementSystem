@@ -30,43 +30,64 @@ namespace LibraryManagementSystem
                 return;
             }
 
-            if (txtPassword.Text.Length < 6)
-            {
-                lblMessage.Text = "Password must be at least 6 characters long.";
-                return;
-            }
+            
 
             try
             {
-                // Hash the Password
-                string hashedPassword = HashPassword(txtPassword.Text);
-
-                // Insert User into Database
                 using (SqlConnection conn = new SqlConnection(connectionString))
                 {
-                    string query = "INSERT INTO Users (Username, Password, FullName, Email, ContactNumber, IsApproved) VALUES (@Username, @Password, @FullName, @Email, @ContactNumber, 0)";
+                    conn.Open();
 
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    // Check if the username already exists
+                    string checkUserQuery = "SELECT COUNT(*) FROM Users WHERE Username = @Username";
+                    using (SqlCommand cmdCheckUser = new SqlCommand(checkUserQuery, conn))
                     {
-                        cmd.Parameters.AddWithValue("@Username", txtUsername.Text);
-                        cmd.Parameters.AddWithValue("@Password", hashedPassword); // Save hashed password
-                        cmd.Parameters.AddWithValue("@FullName", txtFullName.Text);
-                        cmd.Parameters.AddWithValue("@Email", txtEmail.Text);
-                        cmd.Parameters.AddWithValue("@ContactNumber", txtContactNumber.Text);
+                        cmdCheckUser.Parameters.AddWithValue("@Username", txtUsername.Text);
+                        int userCount = Convert.ToInt32(cmdCheckUser.ExecuteScalar());
+                        if (userCount > 0)
+                        {
+                            lblMessage.Text = "Username already exists. Please choose a different username.";
+                            return;
+                        }
+                    }
 
-                        conn.Open();
-                        cmd.ExecuteNonQuery();
-                        conn.Close();
+                    // Check if the email already exists
+                    string checkEmailQuery = "SELECT COUNT(*) FROM Users WHERE Email = @Email";
+                    using (SqlCommand cmdCheckEmail = new SqlCommand(checkEmailQuery, conn))
+                    {
+                        cmdCheckEmail.Parameters.AddWithValue("@Email", txtEmail.Text);
+                        int emailCount = Convert.ToInt32(cmdCheckEmail.ExecuteScalar());
+                        if (emailCount > 0)
+                        {
+                            lblMessage.Text = "Email ID is already registered. Please use a different email.";
+                            return;
+                        }
+                    }
+
+                    // Hash the Password
+                    string hashedPassword = HashPassword(txtPassword.Text);
+
+                    // Insert User into Database
+                    string insertQuery = "INSERT INTO Users (Username, Password, FullName, Email, ContactNumber, IsApproved) VALUES (@Username, @Password, @FullName, @Email, @ContactNumber, 0)";
+                    using (SqlCommand cmdInsert = new SqlCommand(insertQuery, conn))
+                    {
+                        cmdInsert.Parameters.AddWithValue("@Username", txtUsername.Text);
+                        cmdInsert.Parameters.AddWithValue("@Password", hashedPassword);
+                        cmdInsert.Parameters.AddWithValue("@FullName", txtFullName.Text);
+                        cmdInsert.Parameters.AddWithValue("@Email", txtEmail.Text);
+                        cmdInsert.Parameters.AddWithValue("@ContactNumber", txtContactNumber.Text);
+
+                        cmdInsert.ExecuteNonQuery();
                     }
                 }
 
                 Response.Write("<script>alert('Registration successful! Wait few minutes for the approval.'); window.location='UserLogin.aspx';</script>");
-
             }
             catch (Exception ex)
             {
                 lblMessage.Text = "An error occurred: " + ex.Message;
             }
         }
+
     }
 }

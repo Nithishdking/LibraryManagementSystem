@@ -11,6 +11,19 @@
             margin: 0;
             padding: 0;
         }
+        .btn-back {
+    display: inline-block;
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px 15px;
+    text-decoration: none;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.btn-back:hover {
+    background-color: #0056b3;
+}
         form {
             width: 90%;
             margin: 20px auto;
@@ -58,7 +71,7 @@
 </head>
 <body>
     <form id="form1" runat="server">
-        <a href="AdminDashboard.aspx" class="back-button">Back to Dashboard</a>
+        <a href="AdminDashboard.aspx" class="btn-back">Back to Dashboard</a>
         <h1>Admin Reports</h1>
        <div class="button-container">
     <asp:Button ID="btnSwitchToBookReport" runat="server" Text="Book Borrow Report" CssClass="toggle-button" OnClick="ShowBookReport" />

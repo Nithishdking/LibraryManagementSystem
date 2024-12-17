@@ -11,6 +11,19 @@
             margin: 0;
             padding: 0;
         }
+        .btn-back {
+    display: inline-block;
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px 15px;
+    text-decoration: none;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.btn-back:hover {
+    background-color: #0056b3;
+}
         form {
             width: 80%;
             margin: 50px auto;
@@ -42,7 +55,7 @@
 </head>
 <body>
     <form id="form1" runat="server">
-        <a href="AdminDashboard.aspx" class="back-button">Back to Dashboard</a>
+        <a href="AdminDashboard.aspx" class="btn-back">Back to Dashboard</a>
         <h1>Borrow Records</h1>
         <asp:GridView ID="gvBorrowRecords" runat="server" AutoGenerateColumns="False" DataKeyNames="BorrowID"
                       OnRowEditing="gvBorrowRecords_RowEditing" OnRowDeleting="gvBorrowRecords_RowDeleting"
@@ -54,16 +67,7 @@
                 <asp:BoundField DataField="BorrowDate" HeaderText="Borrow Date" SortExpression="BorrowDate" />
                 <asp:BoundField DataField="ReturnDate" HeaderText="Due Date" SortExpression="ReturnDate" />
                 <asp:BoundField DataField="ReturnedDate" HeaderText="Returned Date" SortExpression="ReturnDate" />
-                <asp:CheckBoxField DataField="IsReturned" HeaderText="Returned" SortExpression="IsReturned" />
-                <asp:TemplateField HeaderText="Actions">
-                    <ItemTemplate>
-                        <asp:LinkButton ID="btnEdit" runat="server" CommandName="Edit" Text="Edit"></asp:LinkButton>
-                    </ItemTemplate>
-                    <EditItemTemplate>
-                        <asp:LinkButton ID="btnUpdate" runat="server" CommandName="Update" Text="Update"></asp:LinkButton>
-                        <asp:LinkButton ID="btnCancel" runat="server" CommandName="Cancel" Text="Cancel"></asp:LinkButton>
-                    </EditItemTemplate>
-                </asp:TemplateField>
+              
             </Columns>
         </asp:GridView>
     </form>

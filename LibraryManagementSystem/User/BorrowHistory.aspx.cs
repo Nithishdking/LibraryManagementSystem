@@ -24,45 +24,66 @@ namespace LibraryManagementSystem.User
             {
                 // First, check if the book has been returned or not
                 string checkQuery = @"
-            SELECT IsReturned 
-            FROM BorrowRecords
-            WHERE BookId = @BookId AND UserId = @UserId";
+        SELECT ReturnDate, IsReturned 
+        FROM BorrowRecords
+        WHERE BookId = @BookId AND UserId = @UserId";
 
                 SqlCommand checkCmd = new SqlCommand(checkQuery, conn);
                 checkCmd.Parameters.AddWithValue("@BookId", bookID);
                 checkCmd.Parameters.AddWithValue("@UserId", GetLoggedInUserID());
 
                 conn.Open();
-                bool isReturned = Convert.ToBoolean(checkCmd.ExecuteScalar());
+                SqlDataReader reader = checkCmd.ExecuteReader();
 
-                // Only extend the due date if the book is not returned
-                if (isReturned)
+                if (reader.Read())
                 {
-                    Response.Write("<script>alert('This book has already been returned. You cannot extend the due date.');</script>");
-                    return;
-                }
+                    DateTime returnDate = Convert.ToDateTime(reader["ReturnDate"]);
+                    bool isReturned = Convert.ToBoolean(reader["IsReturned"]);
 
-                // Update the ReturnDate by adding a number of days (e.g., 7 days)
-                string query = @"
+                    // Check if the book has already been returned
+                    if (isReturned)
+                    {
+                        Response.Write("<script>alert('This book has already been returned. You cannot extend the due date.');</script>");
+                        return;
+                    }
+
+                    // Calculate the remaining days until the due date
+                    int daysRemaining = (returnDate - DateTime.Now).Days;
+
+                    // Check if the remaining days are between 1 and 3
+                    if (daysRemaining < 1 || daysRemaining > 3)
+                    {
+                        Response.Write("<script>alert('Due date can only be extended if 1 to 3 days remain.');</script>");
+                        return;
+                    }
+
+                    // Update the ReturnDate by adding a number of days (e.g., 7 days)
+                    string query = @"
             UPDATE BorrowRecords
             SET ReturnDate = DATEADD(DAY, 7, ReturnDate)
             WHERE BookId = @BookId AND UserId = @UserId AND IsReturned = 0";
 
-                try
-                {
-                    SqlCommand cmd = new SqlCommand(query, conn);
-                    cmd.Parameters.AddWithValue("@BookId", bookID);
-                    cmd.Parameters.AddWithValue("@UserId", GetLoggedInUserID());
+                    try
+                    {
+                        reader.Close(); // Close the reader before executing another query
+                        SqlCommand cmd = new SqlCommand(query, conn);
+                        cmd.Parameters.AddWithValue("@BookId", bookID);
+                        cmd.Parameters.AddWithValue("@UserId", GetLoggedInUserID());
 
-                    cmd.ExecuteNonQuery(); // Execute the command to extend the return date
+                        cmd.ExecuteNonQuery(); // Execute the command to extend the return date
 
-                    // Reload the borrow records to reflect the updated return date
-                    LoadBorrowRecords();
-                    Response.Write("<script>alert('Due date extended successfully!');</script>");
+                        // Reload the borrow records to reflect the updated return date
+                        LoadBorrowRecords();
+                        Response.Write("<script>alert('Due date extended successfully!');</script>");
+                    }
+                    catch (Exception ex)
+                    {
+                        Response.Write($"<script>alert('Error extending due date: {ex.Message}');</script>");
+                    }
                 }
-                catch (Exception ex)
+                else
                 {
-                    Response.Write($"<script>alert('Error extending due date: {ex.Message}');</script>");
+                    Response.Write("<script>alert('No valid record found for this book.');</script>");
                 }
             }
         }

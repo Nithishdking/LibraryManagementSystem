@@ -100,6 +100,24 @@
             color: #0056b3;
         }
     </style>
+    <script>
+        // Prevent the back button from going too far
+        let backButtonClicks = 0;
+
+        // Push an initial state
+        window.history.pushState(null, null, window.location.href);
+
+        // Listen for the popstate event (back button press)
+        window.onpopstate = function (event) {
+            backButtonClicks++;
+            if (backButtonClicks > 2) {  // Allow only 2 back clicks
+                window.location.href = 'AdminDashboard';  // Redirect or replace with your desired page
+            } else {
+                window.history.forward();  // Prevent going back further
+            }
+        };
+  </script>
+
 </head>
 <body>
 
